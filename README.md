@@ -138,6 +138,7 @@ Notes:
 
 ## Credits
 
+- This module was mostly written by Claude Opus 
 - UI, lightning logic and Lottie handling: [MMM-AmbientWeather](https://github.com/hearter20176/MMM-AmbientWeather) by Harry Arter (MIT)
 - WeatherFlow connection design: [MMM-TempestWeather](https://github.com/dwburger/MMM-TempestWeather) by D.W. Burger (MIT)
 - Weather data: WeatherFlow Tempest. Use of their data is subject to WeatherFlow's terms.
