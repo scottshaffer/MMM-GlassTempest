@@ -84,7 +84,11 @@
   content: "";
   position: absolute;
   inset: -20%;
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.35));
+  /* Feathered at both ends: a hard-edged gradient shows its box edge as a diagonal line,
+     which is very visible when the shimmer is parked (reduced motion) on a tall card. 90deg, not
+     120deg: the tilt comes from the rotate() below, and on a tall box a 120deg gradient never
+     reaches transparent at the side edges. */
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.4) 30%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.35) 70%, rgba(255, 255, 255, 0));
   transform: translateX(-60%) rotate(8deg);
   animation: gt-shimmer 16s linear infinite;
   opacity: 0.32;
@@ -116,6 +120,7 @@
    The shimmer band is frozen in place (like MMM-GlassClock) so the card keeps its highlight. */
 .MMM-GlassTempest.glass-card.gt-reduced::before {
   animation: none;
+  transform: translateX(0) rotate(8deg); /* parked mid-card; soft edges, no visible line */
 }
 
 .MMM-GlassTempest.glass-card.gt-reduced::after {
@@ -125,6 +130,7 @@
 @media (prefers-reduced-motion: reduce) {
   .MMM-GlassTempest.glass-card::before {
     animation: none;
+    transform: translateX(0) rotate(8deg);
   }
 
   .MMM-GlassTempest.glass-card::after {
@@ -312,7 +318,9 @@
   margin-top: auto;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  /* Dark glass tint: a nearly clear panel takes on whatever is behind the card (such as a bright
+     background glow) and the pale-blue lows and chance-of-rain text disappear into it. */
+  background: rgba(6, 14, 40, 0.34);
   backdrop-filter: blur(4px);
   flex-shrink: 0;
 }
