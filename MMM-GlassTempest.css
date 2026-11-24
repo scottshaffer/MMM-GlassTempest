@@ -43,7 +43,7 @@
 }
 
 /* === Liquid glass card === */
-.glass-card {
+.MMM-GlassTempest.glass-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -75,23 +75,23 @@
   justify-content: flex-start;
 }
 
-.glass-card > * {
+.MMM-GlassTempest.glass-card > * {
   position: relative;
   z-index: 1;
 }
 
-.glass-card::before {
+.MMM-GlassTempest.glass-card::before {
   content: "";
   position: absolute;
   inset: -20%;
   background: linear-gradient(120deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.35));
   transform: translateX(-60%) rotate(8deg);
-  animation: glass-shimmer 16s linear infinite;
+  animation: gt-shimmer 16s linear infinite;
   opacity: 0.32;
   pointer-events: none;
 }
 
-.glass-card::after {
+.MMM-GlassTempest.glass-card::after {
   content: "";
   position: absolute;
   width: 320px;
@@ -104,42 +104,40 @@
   filter: blur(38px);
   opacity: 0.45;
   pointer-events: none;
-  animation: float-fade 18s ease-in-out infinite alternate;
+  animation: gt-float 18s ease-in-out infinite alternate;
 }
 
-.raised-edge {
+.MMM-GlassTempest.raised-edge {
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 /* Reduced motion (reduceMotion option, "pi" profile, or the OS setting): no moving background.
-   The shimmer is hidden entirely; the glow stays as a static highlight. */
-.glass-card.gt-reduced::before {
+   The shimmer band is frozen in place (like MMM-GlassClock) so the card keeps its highlight. */
+.MMM-GlassTempest.glass-card.gt-reduced::before {
   animation: none;
-  display: none;
 }
 
-.glass-card.gt-reduced::after {
+.MMM-GlassTempest.glass-card.gt-reduced::after {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass-card::before {
+  .MMM-GlassTempest.glass-card::before {
     animation: none;
-    display: none;
   }
 
-  .glass-card::after {
+  .MMM-GlassTempest.glass-card::after {
     animation: none;
   }
 }
 
-@keyframes float-fade {
+@keyframes gt-float {
   0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
   100% { transform: translate3d(8px, -6px, 0) scale(1.05); opacity: 0.38; }
 }
 
-@keyframes glass-shimmer {
+@keyframes gt-shimmer {
   0% { transform: translateX(-60%) rotate(8deg); opacity: 0.32; }
   50% { transform: translateX(30%) rotate(8deg); opacity: 0.14; }
   100% { transform: translateX(120%) rotate(8deg); opacity: 0.32; }
