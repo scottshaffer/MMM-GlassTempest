@@ -174,7 +174,9 @@ Module.register("MMM-GlassTempest", {
       this.offline = false;
       this._trackLightning(data);
       this._broadcastCurrentConditions(data);
-      this.safeUpdateDom(500);
+      // Swap instantly: a non-zero speed makes MagicMirror fade the whole module out and back in
+      // on every observation (about once a minute), which shows up as a flicker.
+      this.safeUpdateDom(0);
     }
 
     if (notification === "TEMPEST_ERROR") {
