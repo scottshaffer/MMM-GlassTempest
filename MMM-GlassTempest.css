@@ -318,7 +318,9 @@
   margin-top: auto;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  /* Dark glass tint: a nearly clear panel takes on whatever is behind the card (such as a bright
+     background glow) and the pale-blue lows and chance-of-rain text disappear into it. */
+  background: rgba(6, 14, 40, 0.34);
   backdrop-filter: blur(4px);
   flex-shrink: 0;
 }
