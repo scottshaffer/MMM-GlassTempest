@@ -22,6 +22,7 @@ class FakeElement {
     this.style = { setProperty() {} };
     this.classList = {
       add: (c) => this._classes.add(c),
+      remove: (c) => this._classes.delete(c),
       contains: (c) => this._classes.has(c)
     };
   }
@@ -171,4 +172,46 @@ test("reduced motion adds the class that stops the background animation", () => 
   const full = setup({ reduceMotion: false, performanceProfile: "full" });
   full.m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 70 } });
   assert.ok(!full.m.getDom().classList.contains("gt-reduced"));
+});
+
+test("dayMode: day / night are fixed; none leaves it to the theme", () => {
+  assert.ok(setup({ dayMode: "day" }).m.getDom().classList.contains("gt-light"));
+  assert.ok(!setup({ dayMode: "night" }).m.getDom().classList.contains("gt-light"));
+  const { m } = setup();
+  assert.equal(m.isDay, null);
+  assert.ok(!m.getDom().classList.contains("gt-light"));
+});
+
+test("dayMode auto follows the station's own sunrise and sunset, card and banner", () => {
+  const { m, body } = setup({ dayMode: "auto" });
+  const now = Date.now();
+  // Sun up: sunrise an hour ago, sunset in an hour
+  m.socketNotificationReceived("TEMPEST_DATA", {
+    lastData: { tempf: 60, lightning_day: 0, lightning_hour: 0,
+      sunrise: new Date(now - 60 * MIN).toISOString(), sunset: new Date(now + 60 * MIN).toISOString() }
+  });
+  assert.equal(m.isDay, true);
+  const card = m.getDom();
+  assert.ok(card.classList.contains("gt-light"));
+  // A strike while it is light: the banner gets the light look too
+  m.socketNotificationReceived("TEMPEST_DATA", {
+    lastData: { tempf: 60, lightning_day: 1, lightning_hour: 1, lightning_time: now, lightning_distance: 20,
+      sunrise: new Date(now - 60 * MIN).toISOString(), sunset: new Date(now + 60 * MIN).toISOString() }
+  });
+  const banner = body.children.find((c) => c.classList.contains("gt-lightning-alert"));
+  assert.ok(banner.classList.contains("gt-light"));
+  // Sunset has passed: the live card and banner flip back without a re-render
+  m.weatherData.sunset = new Date(now - 1 * MIN).toISOString();
+  m.weatherData.sunrise = new Date(now - 10 * 60 * MIN).toISOString();
+  m._updateDayMode();
+  assert.equal(m.isDay, false);
+  assert.ok(!card.classList.contains("gt-light"));
+  assert.ok(!banner.classList.contains("gt-light"));
+});
+
+test("dayMode auto uses dayStart/dayEnd until sun times are known", () => {
+  const { m } = setup({ dayMode: "auto", dayStart: "07:00", dayEnd: "19:00" });
+  assert.equal(m._computeIsDay(new Date(2026, 10, 24, 6, 59)), false);
+  assert.equal(m._computeIsDay(new Date(2026, 10, 24, 12, 0)), true);
+  assert.equal(m._computeIsDay(new Date(2026, 10, 24, 19, 0)), false);
 });

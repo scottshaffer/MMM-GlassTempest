@@ -11,6 +11,8 @@ with the Tempest data connection of [MMM-TempestWeather](https://github.com/scot
 - Tempest's own current condition drives the animated icon (the station's rain gauge overrides it while it is raining)
 - Multi-day forecast with chance of precipitation (WeatherFlow Better Forecast)
 - Sunrise and sunset
+- Light day look and dark night look, switched at the station's own sunrise and sunset with
+  `dayMode: "auto"` (see [Day and night](#day-and-night))
 - Lightning row on the card, a "LIGHTNING NEARBY" badge and a page-wide strike banner
 - Imperial or metric units
 - Automatic reconnection, stale-data watchdog, visible error messages
@@ -113,6 +115,23 @@ If the card shows "No observations received from Tempest device", the `deviceId`
 | `weatherNotification` | `"AMBIENT_WEATHER_DATA"` | Notification name for current conditions |
 | `lightningNotification` | `"AMBIENT_LIGHTNING"` | Notification name for each strike |
 | `debug` | `false` | Log every data payload to the console |
+| `dayMode` | `"none"` | `"auto"` (light from sunrise to sunset), `"day"` (always light), `"night"` (always dark), or `"none"` (light only if a theme or MMM-GlassMonthlyCalendar sets `body.mm-day`) |
+| `dayStart` / `dayEnd` | `"07:00"` / `"19:00"` | Light hours for `dayMode: "auto"` until the station's sunrise and sunset are known |
+
+### Day and night
+
+```js
+config: { dayMode: "auto" }
+```
+
+With `"auto"` the card turns to light glass at your station's sunrise and back to dark at sunset,
+using the times from WeatherFlow's forecast. The lightning banner follows the card. The same times go
+out with every weather update (`weatherNotification`), so
+[MMM-GlassClock](https://github.com/scottshaffer/MMM-GlassClock) and
+[MMM-GlassMonthlyCalendar](https://github.com/scottshaffer/MMM-GlassMonthlyCalendar) with
+`dayMode: "auto"` switch at the same moment.
+
+The card also turns light whenever something sets `body.mm-day` on the page.
 
 ## How it works
 

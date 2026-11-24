@@ -48,6 +48,11 @@ Module.register("MMM-GlassTempest", {
     lightningDangerDistance: 6, // strikes this close (mi, or km when metric) are urgent
     lightningAlertPosition: "bottom", // "bottom" | "top"
 
+    // Day mode (light glass), shared with MMM-GlassClock and MMM-GlassMonthlyCalendar
+    dayMode: "none", // "none" (light only if a theme sets body.mm-day) | "day" | "night" | "auto"
+    dayStart: "07:00", // "auto" until the station's sunrise/sunset is known
+    dayEnd: "19:00",
+
     animations: {
       clear: { day: "clear_isDay.json", night: "clear_night.json" },
       partly_cloudy: {
@@ -145,7 +150,11 @@ Module.register("MMM-GlassTempest", {
       maxReconnectDelay: this.config.maxReconnectDelay
     });
 
-    this.offlineTimer = setInterval(() => this._checkOffline(), 15000);
+    this.isDay = this._computeIsDay(new Date());
+    this.offlineTimer = setInterval(() => {
+      this._checkOffline();
+      this._updateDayMode();
+    }, 15000);
   },
 
   // System notification, fired once MagicMirror has attached this module's DOM node - the
@@ -172,6 +181,7 @@ Module.register("MMM-GlassTempest", {
       this.lastUpdate = Date.now();
       this.loaded = true;
       this.offline = false;
+      this._updateDayMode();
       this._trackLightning(data);
       this._broadcastCurrentConditions(data);
       // Swap instantly: a non-zero speed makes MagicMirror fade the whole module out and back in
@@ -345,6 +355,51 @@ Module.register("MMM-GlassTempest", {
       this.pressureTrend = { trend, delta };
     }
     this.lastPressure = { value: currentRawInHg, ts: Date.now() };
+  },
+
+  /* ---------- day mode ---------- */
+
+  _dayOrdinal(d) {
+    return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  },
+
+  // true = light, false = dark, null = leave it to the theme (dayMode "none").
+  // "auto" uses the station's own sunrise/sunset; times up to 3 days old are moved to today.
+  _computeIsDay(now) {
+    const mode = String(this.config.dayMode || "none").toLowerCase();
+    if (mode === "day") return true;
+    if (mode === "night") return false;
+    if (mode !== "auto") return null;
+    const d = this.weatherData;
+    const rise = d && d.sunrise ? new Date(d.sunrise) : null;
+    const set = d && d.sunset ? new Date(d.sunset) : null;
+    if (rise && set && !isNaN(rise) && !isNaN(set) && set > rise) {
+      const shift = this._dayOrdinal(now) - this._dayOrdinal(rise);
+      if (shift >= 0 && shift <= 3) {
+        const move = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate() + shift, x.getHours(), x.getMinutes(), x.getSeconds());
+        return now >= move(rise) && now < move(set);
+      }
+    }
+    const mins = (hhmm) => {
+      const m = String(hhmm || "").match(/^(\d{1,2}):(\d{2})$/);
+      return m ? +m[1] * 60 + +m[2] : null;
+    };
+    const start = mins(this.config.dayStart) ?? 420;
+    const end = mins(this.config.dayEnd) ?? 1140;
+    const t = now.getHours() * 60 + now.getMinutes();
+    return start <= end ? t >= start && t < end : t >= start || t < end;
+  },
+
+  // Flip the live card (and the lightning banner) without a re-render.
+  _updateDayMode() {
+    const isDay = this._computeIsDay(new Date());
+    if (isDay === this.isDay) return;
+    this.isDay = isDay;
+    for (const el of [this.cardEl, this.lightningAlertEl]) {
+      if (!el || !el.classList) continue;
+      if (isDay) el.classList.add("gt-light");
+      else el.classList.remove("gt-light");
+    }
   },
 
   _isDay(d) {
@@ -611,6 +666,7 @@ Module.register("MMM-GlassTempest", {
     const classes = ["gt-lightning-alert", `gt-lightning-alert-${this.lightningCfg.position}`];
     if (danger) classes.push("gt-lightning-danger");
     if (this.reduceMotion) classes.push("gt-lightning-reduced");
+    if (this.isDay) classes.push("gt-light");
     else if (isNew) classes.push("gt-lightning-enter");
     el.className = classes.join(" ");
 
@@ -849,6 +905,8 @@ Module.register("MMM-GlassTempest", {
     if (this.offline) wrapper.classList.add("offline");
     // Reduced motion / Pi profile: also stop the CSS shimmer and glow drift on the card background.
     if (this.reduceMotion) wrapper.classList.add("gt-reduced");
+    if (this.isDay) wrapper.classList.add("gt-light");
+    this.cardEl = wrapper;
 
     if (this.config.title) {
       const titleEl = document.createElement("div");

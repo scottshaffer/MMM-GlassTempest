@@ -33,11 +33,6 @@
   color: #fca5a5;
 }
 
-/* Pale pink is unreadable on the light day card - darken it for legibility in day mode. */
-body.mm-day .gt-error {
-  color: var(--mm-text, #1d2738);
-}
-
 .gt-error .fa {
   font-size: 22px;
 }
@@ -45,10 +40,6 @@ body.mm-day .gt-error {
 .gt-error-text {
   font-size: 13px;
   color: rgba(233, 237, 245, 0.85);
-}
-
-body.mm-day .gt-error-text {
-  color: var(--mm-text-2, #5a6679);
 }
 
 /* === Liquid glass card === */
@@ -514,14 +505,139 @@ body.mm-day .gt-error-text {
   color: #fde68a;
 }
 
-/* Day mode: a more specific !important rule is needed when a theme forces --mm-text on every div
-   in the card (as the original MMM-AmbientWeather custom.css did). */
+/* A theme that forces --mm-text on every div in the card (as the original MMM-AmbientWeather
+   custom.css did) needs !important to keep the active lightning text amber in day mode. */
 body.mm-day .MMM-GlassTempest .metric-item.gt-lightning-active div {
   color: #92400e !important;
 }
 
-body.mm-day .metric-item.gt-lightning i {
+/* === Day mode: light glass ===
+   On when dayMode puts gt-light on the card, or when a theme / MMM-GlassMonthlyCalendar
+   (dayModeScope "page") sets body.mm-day. Same light palette as the other Glass modules. */
+body.mm-day .MMM-GlassTempest,
+.MMM-GlassTempest.gt-light {
+  --mm-text: #1d2738;
+  --mm-text-2: #5a6679;
+  --mm-accent-2: #0369a1;
+  --mm-sun: #d97706;
+  --mm-moon: #0369a1;
+  color: #1d2738;
+}
+
+body.mm-day .MMM-GlassTempest.glass-card,
+.MMM-GlassTempest.glass-card.gt-light {
+  border-color: rgba(255, 255, 255, 0.75);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.46)),
+    radial-gradient(120% 120% at 12% 12%, rgba(125, 211, 252, 0.34), rgba(37, 99, 235, 0)),
+    radial-gradient(140% 140% at 88% 18%, rgba(199, 210, 254, 0.4), rgba(99, 102, 241, 0));
+  box-shadow:
+    0 18px 46px rgba(40, 56, 84, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+body.mm-day .MMM-GlassTempest.glass-card::before,
+.MMM-GlassTempest.glass-card.gt-light::before {
+  opacity: 0.16;
+}
+
+body.mm-day .MMM-GlassTempest.glass-card::after,
+.MMM-GlassTempest.glass-card.gt-light::after {
+  opacity: 0.3;
+}
+
+/* Text that is hard-coded light for the dark card */
+body.mm-day .MMM-GlassTempest .main-right,
+.MMM-GlassTempest.gt-light .main-right,
+body.mm-day .MMM-GlassTempest .sun-row,
+.MMM-GlassTempest.gt-light .sun-row,
+body.mm-day .MMM-GlassTempest .metrics,
+.MMM-GlassTempest.gt-light .metrics,
+body.mm-day .MMM-GlassTempest .forecast-name,
+.MMM-GlassTempest.gt-light .forecast-name,
+body.mm-day .MMM-GlassTempest .uv-label,
+.MMM-GlassTempest.gt-light .uv-label {
+  color: #1d2738;
+}
+
+body.mm-day .MMM-GlassTempest .temp-feels,
+.MMM-GlassTempest.gt-light .temp-feels,
+body.mm-day .MMM-GlassTempest .loading-text,
+.MMM-GlassTempest.gt-light .loading-text,
+body.mm-day .MMM-GlassTempest .forecast-title,
+.MMM-GlassTempest.gt-light .forecast-title,
+body.mm-day .MMM-GlassTempest .forecast-text,
+.MMM-GlassTempest.gt-light .forecast-text,
+body.mm-day .MMM-GlassTempest .footer,
+.MMM-GlassTempest.gt-light .footer,
+body.mm-day .MMM-GlassTempest .gt-error-text,
+.MMM-GlassTempest.gt-light .gt-error-text {
+  color: #5a6679;
+}
+
+body.mm-day .MMM-GlassTempest .temp-value,
+.MMM-GlassTempest.gt-light .temp-value {
+  text-shadow: none;
+}
+
+body.mm-day .MMM-GlassTempest .gt-error,
+.MMM-GlassTempest.gt-light .gt-error,
+body.mm-day .MMM-GlassTempest .offline-text,
+.MMM-GlassTempest.gt-light .offline-text {
+  color: #b91c1c;
+}
+
+/* Forecast panel and day tiles */
+body.mm-day .MMM-GlassTempest .forecast,
+.MMM-GlassTempest.gt-light .forecast {
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow: inset 0 0 0 1px rgba(29, 39, 56, 0.05);
+}
+
+body.mm-day .MMM-GlassTempest .forecast-day,
+.MMM-GlassTempest.gt-light .forecast-day {
+  border-color: rgba(29, 39, 56, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+body.mm-day .MMM-GlassTempest .forecast-temps .hi,
+.MMM-GlassTempest.gt-light .forecast-temps .hi {
+  color: #ea580c;
+}
+
+body.mm-day .MMM-GlassTempest .forecast-temps .lo,
+.MMM-GlassTempest.gt-light .forecast-temps .lo {
+  color: #0284c7;
+  opacity: 1;
+}
+
+/* Rain / lightning badges */
+body.mm-day .MMM-GlassTempest .alert-rain,
+.MMM-GlassTempest.gt-light .alert-rain {
+  color: #0369a1;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(14, 165, 233, 0.18));
+  box-shadow: 0 2px 8px rgba(40, 56, 84, 0.15);
+}
+
+body.mm-day .MMM-GlassTempest .alert-lightning,
+.MMM-GlassTempest.gt-light .alert-lightning {
   color: #a16207;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(248, 180, 0, 0.2));
+  border-color: rgba(161, 98, 7, 0.5);
+  box-shadow: 0 2px 8px rgba(40, 56, 84, 0.15);
+}
+
+/* Lightning row */
+body.mm-day .MMM-GlassTempest .metric-item.gt-lightning i,
+.MMM-GlassTempest.gt-light .metric-item.gt-lightning i {
+  color: #a16207;
+}
+
+body.mm-day .MMM-GlassTempest .metric-item.gt-lightning-active,
+.MMM-GlassTempest.gt-light .metric-item.gt-lightning-active {
+  color: #92400e;
 }
 
 /* Page-wide strike banner. It is appended to <body> (not the module), so it shows on every
@@ -561,23 +677,27 @@ body.mm-day .metric-item.gt-lightning i {
   top: 24px;
 }
 
-body.mm-day .gt-lightning-alert {
+body.mm-day .gt-lightning-alert,
+.gt-lightning-alert.gt-light {
   --gt-la-bg: rgb(255 255 255 / 94%);
-
+  color: #1d2738;
   border-color: rgb(161 98 7 / 60%);
   box-shadow: 0 12px 30px rgb(40 56 84 / 22%), inset 0 1px 0 rgb(255 255 255 / 70%);
 }
 
-body.mm-day .gt-lightning-alert.gt-lightning-danger {
+body.mm-day .gt-lightning-alert.gt-lightning-danger,
+.gt-lightning-alert.gt-light.gt-lightning-danger {
   border-color: rgb(220 38 38 / 70%);
 }
 
 /* Yellow and pale red are too faint on the white day banner. */
-body.mm-day .gt-lightning-alert-icon {
+body.mm-day .gt-lightning-alert-icon,
+.gt-lightning-alert.gt-light .gt-lightning-alert-icon {
   color: #a16207;
 }
 
-body.mm-day .gt-lightning-danger .gt-lightning-alert-icon {
+body.mm-day .gt-lightning-danger .gt-lightning-alert-icon,
+.gt-lightning-alert.gt-light.gt-lightning-danger .gt-lightning-alert-icon {
   color: #dc2626;
 }
 
