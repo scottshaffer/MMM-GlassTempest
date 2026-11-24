@@ -163,3 +163,12 @@ test("metric units convert temperature and wind", () => {
   assert.match(html, /100\.0/);
   assert.match(html, /16\.1 km\/h/);
 });
+
+test("reduced motion adds the class that stops the background animation", () => {
+  const { m } = setup({ reduceMotion: true });
+  m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 70 } });
+  assert.ok(m.getDom().classList.contains("gt-reduced"));
+  const full = setup({ reduceMotion: false, performanceProfile: "full" });
+  full.m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 70 } });
+  assert.ok(!full.m.getDom().classList.contains("gt-reduced"));
+});
