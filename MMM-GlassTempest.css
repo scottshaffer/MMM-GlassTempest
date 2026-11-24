@@ -121,6 +121,28 @@ body.mm-day .gt-error-text {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
+/* Reduced motion (reduceMotion option, "pi" profile, or the OS setting): no moving background.
+   The shimmer is hidden entirely; the glow stays as a static highlight. */
+.glass-card.gt-reduced::before {
+  animation: none;
+  display: none;
+}
+
+.glass-card.gt-reduced::after {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-card::before {
+    animation: none;
+    display: none;
+  }
+
+  .glass-card::after {
+    animation: none;
+  }
+}
+
 @keyframes float-fade {
   0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
   100% { transform: translate3d(8px, -6px, 0) scale(1.05); opacity: 0.38; }

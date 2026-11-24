@@ -845,6 +845,8 @@ Module.register("MMM-GlassTempest", {
       wrapper.style.setProperty("--gt-max-height", `${Number(this.config.maxHeight)}px`);
     }
     if (this.offline) wrapper.classList.add("offline");
+    // Reduced motion / Pi profile: also stop the CSS shimmer and glow drift on the card background.
+    if (this.reduceMotion) wrapper.classList.add("gt-reduced");
 
     if (this.config.title) {
       const titleEl = document.createElement("div");
