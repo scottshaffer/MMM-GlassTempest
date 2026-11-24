@@ -1,0 +1,30 @@
+{
+  "name": "mmm-glasstempest",
+  "version": "0.1.0",
+  "description": "MagicMirror liquid-glass weather card fed by a WeatherFlow Tempest station: live observations, Tempest forecast, lightning alerts and animated Lottie icons.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_GITHUB_USER/MMM-GlassTempest.git"
+  },
+  "license": "MIT",
+  "author": "YOUR NAME",
+  "keywords": [
+    "MagicMirror",
+    "weather",
+    "tempest",
+    "weatherflow",
+    "lightning",
+    "lottie"
+  ],
+  "type": "commonjs",
+  "main": "node_helper.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "lottie-web": "5.10.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
