@@ -826,7 +826,7 @@ body.mm-day .MMM-GlassTempest .forecast-interactive:active,
 
 .gt-popup-card {
   box-sizing: border-box;
-  width: min(560px, 100%);
+  width: min(880px, 100%);
   max-height: 100%;
   overflow: hidden;
   padding: 18px 20px 14px;
@@ -858,60 +858,39 @@ body.mm-day .MMM-GlassTempest .forecast-interactive:active,
   opacity: 0.7;
 }
 
-.gt-popup-row {
+/* The seven days reuse the card's own forecast tiles (.forecast-day, .forecast-name, ...), so they
+   look the same as the 3-day panel. */
+.gt-popup-grid {
   display: grid;
-  grid-template-columns: minmax(92px, 1.1fr) 34px 84px minmax(0, 1.6fr) 44px;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-  padding: 9px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.12));
-}
-
-.gt-popup-dayname {
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.gt-popup-date {
-  font-size: 12px;
-  opacity: 0.65;
-}
-
-.gt-popup-icon {
-  font-size: 22px;
-  text-align: center;
-}
-
-.gt-popup-temps {
-  display: flex;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
-  font-size: 16px;
-  font-weight: 700;
 }
 
-.gt-popup-hi {
-  color: #b0ff1f;
+.gt-popup-grid .forecast-day {
+  padding: 12px 6px;
+  gap: 5px;
 }
 
-.gt-popup-lo {
-  color: #70afff;
-  font-weight: 600;
+.gt-popup-grid .forecast-name {
+  font-size: 14px;
 }
 
-.gt-popup-text {
-  font-size: 13px;
-  opacity: 0.9;
-  line-height: 1.25;
+.gt-popup-grid .forecast-temps {
+  font-size: 15px;
 }
 
-.gt-popup-precip {
-  font-size: 13px;
-  font-weight: 650;
-  text-align: right;
-  color: #7dd3fc;
+.gt-popup-grid .forecast-text {
+  font-size: 12px;
+}
+
+.gt-popup-grid .forecast-precip {
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .gt-popup-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .gt-popup-hint {
@@ -960,19 +939,29 @@ body.mm-day .MMM-GlassTempest .forecast-interactive:active,
   box-shadow: 0 24px 60px rgba(20, 30, 55, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
-.gt-popup-overlay.gt-light .gt-popup-row {
-  border-color: rgba(29, 39, 56, 0.12);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.66));
+.gt-popup-overlay.gt-light .forecast-day {
+  border-color: rgba(29, 39, 56, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.56));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 3px rgba(29, 39, 56, 0.14);
 }
 
-.gt-popup-overlay.gt-light .gt-popup-hi {
+.gt-popup-overlay.gt-light .forecast-name {
+  color: #1d2738;
+}
+
+.gt-popup-overlay.gt-light .forecast-text {
+  color: #5a6679;
+}
+
+.gt-popup-overlay.gt-light .forecast-precip {
+  color: #0369a1;
+}
+
+.gt-popup-overlay.gt-light .forecast-temps .hi {
   color: #ea580c;
 }
 
-.gt-popup-overlay.gt-light .gt-popup-lo {
+.gt-popup-overlay.gt-light .forecast-temps .lo {
   color: #0284c7;
-}
-
-.gt-popup-overlay.gt-light .gt-popup-precip {
-  color: #0369a1;
+  opacity: 1;
 }

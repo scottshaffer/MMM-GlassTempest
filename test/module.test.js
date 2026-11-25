@@ -317,10 +317,19 @@ test("tapping the forecast panel opens a 7-day popup", () => {
   findAll(m.getDom(), (e) => e.classList.contains("forecast"))[0].fire("click");
   const overlay = body.children.find((c) => c.classList.contains("gt-popup-overlay"));
   assert.ok(overlay);
-  const rows = findAll(overlay, (e) => e.className === "gt-popup-row");
-  assert.equal(rows.length, 7);
+  // The same tiles as the card's 3-day panel: name, high/low, icon, conditions, chance of rain.
+  const tiles = findAll(overlay, (e) => e.className === "forecast-day");
+  assert.equal(tiles.length, 7);
   assert.match(text(overlay), /7-Day Forecast/);
-  assert.match(text(overlay), /Day 6/);
+  tiles.forEach((tile) => {
+    ["forecast-name", "forecast-temps", "forecast-icon", "forecast-text", "forecast-precip"].forEach((cls) =>
+      assert.ok(findAll(tile, (e) => e.className === cls).length === 1, `${cls} present`)
+    );
+  });
+  assert.match(text(tiles[6]), /Day 6/);
+  assert.match(text(tiles[6]), /60%/);
+  assert.match(text(tiles[0]), /60°/);
+  assert.match(text(tiles[0]), /46°/);
 });
 
 test("a tap anywhere on the popup, or Escape, closes it", () => {

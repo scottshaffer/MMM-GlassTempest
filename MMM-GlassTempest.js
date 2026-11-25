@@ -873,6 +873,63 @@ Module.register("MMM-GlassTempest", {
     this._startAnimations();
   },
 
+  // One forecast day tile (name, high/low, icon, conditions, chance of rain). Shared by the card's
+  // panel and the 7-day popup so the two always look the same. The popup passes useLottie=false:
+  // its tiles live on document.body, outside the card's animation lifecycle.
+  _forecastTile(day, idx, useLottie) {
+    const dayName = day?.date
+      ? new Date(day.date).toLocaleDateString([], { weekday: "short" })
+      : "";
+    const hi =
+      typeof day?.high === "number" ? day.high.toFixed(0) : "-";
+    const lo =
+      typeof day?.low === "number" ? day.low.toFixed(0) : "-";
+    const phrase = day?.phrase || "";
+    // node_helper already derives `cond` from the Tempest icon for every forecast item.
+    const dayCond = day?.cond || "partly_cloudy";
+    const dayIsDay = day?.isDaytime !== false;
+
+    const dayEl = document.createElement("div");
+    dayEl.className = "forecast-day";
+    const nameEl = document.createElement("div");
+    nameEl.className = "forecast-name";
+    nameEl.textContent = dayName;
+    const tempsEl = document.createElement("div");
+    tempsEl.className = "forecast-temps";
+    const hiEl = document.createElement("span");
+    hiEl.className = "hi";
+    hiEl.textContent = `${hi}°`;
+    const loEl = document.createElement("span");
+    loEl.className = "lo";
+    loEl.textContent = `${lo}°`;
+    tempsEl.appendChild(hiEl);
+    tempsEl.appendChild(loEl);
+    const iconEl = document.createElement("div");
+    iconEl.className = "forecast-icon";
+    if (useLottie) {
+      iconEl.id = `${this.identifier}-forecast-anim-${idx}`;
+      this._registerAnimation(iconEl, this._resolveAnimationFile(dayCond, dayIsDay));
+    } else {
+      const staticIcon = document.createElement("i");
+      staticIcon.className = `fa ${this._staticIconClass(dayCond, dayIsDay)} forecast-static-icon`;
+      iconEl.appendChild(staticIcon);
+    }
+    const textEl = document.createElement("div");
+    textEl.className = "forecast-text";
+    textEl.textContent = phrase;
+    dayEl.appendChild(nameEl);
+    dayEl.appendChild(tempsEl);
+    dayEl.appendChild(iconEl);
+    dayEl.appendChild(textEl);
+    if (this.config.showForecastPrecip && typeof day?.precip === "number") {
+      const precipEl = document.createElement("div");
+      precipEl.className = "forecast-precip";
+      precipEl.textContent = `${Math.round(day.precip)}%`;
+      dayEl.appendChild(precipEl);
+    }
+    return dayEl;
+  },
+
   // ---- 7-day forecast popup ---------------------------------------------------------------
   //
   // A full-screen overlay on document.body (like the lightning banner, so it sits above every
@@ -909,60 +966,10 @@ Module.register("MMM-GlassTempest", {
     }
     card.appendChild(head);
 
-    const todayKey = new Date().toDateString();
-    items.forEach((day) => {
-      const when = day?.date ? new Date(day.date) : null;
-      const row = document.createElement("div");
-      row.className = "gt-popup-row";
-
-      const dayEl = document.createElement("div");
-      dayEl.className = "gt-popup-day";
-      const nameEl = document.createElement("div");
-      nameEl.className = "gt-popup-dayname";
-      nameEl.textContent = !when
-        ? ""
-        : when.toDateString() === todayKey
-          ? "Today"
-          : when.toLocaleDateString([], { weekday: "long" });
-      const dateEl = document.createElement("div");
-      dateEl.className = "gt-popup-date";
-      dateEl.textContent = when ? when.toLocaleDateString([], { month: "short", day: "numeric" }) : "";
-      dayEl.appendChild(nameEl);
-      dayEl.appendChild(dateEl);
-
-      const iconEl = document.createElement("div");
-      iconEl.className = "gt-popup-icon";
-      const icon = document.createElement("i");
-      icon.className = `fa ${this._staticIconClass(day?.cond || "partly_cloudy", day?.isDaytime !== false)}`;
-      iconEl.appendChild(icon);
-
-      const temps = document.createElement("div");
-      temps.className = "gt-popup-temps";
-      const hi = document.createElement("span");
-      hi.className = "gt-popup-hi";
-      hi.textContent = typeof day?.high === "number" ? `${day.high.toFixed(0)}°` : "-°";
-      const lo = document.createElement("span");
-      lo.className = "gt-popup-lo";
-      lo.textContent = typeof day?.low === "number" ? `${day.low.toFixed(0)}°` : "-°";
-      temps.appendChild(hi);
-      temps.appendChild(lo);
-
-      const text = document.createElement("div");
-      text.className = "gt-popup-text";
-      text.textContent = day?.phrase || "";
-
-      row.appendChild(dayEl);
-      row.appendChild(iconEl);
-      row.appendChild(temps);
-      row.appendChild(text);
-      if (this.config.showForecastPrecip) {
-        const precip = document.createElement("div");
-        precip.className = "gt-popup-precip";
-        precip.textContent = typeof day?.precip === "number" ? `${Math.round(day.precip)}%` : "";
-        row.appendChild(precip);
-      }
-      card.appendChild(row);
-    });
+    const grid = document.createElement("div");
+    grid.className = "gt-popup-grid";
+    items.forEach((day, idx) => grid.appendChild(this._forecastTile(day, idx, false)));
+    card.appendChild(grid);
 
     const hint = document.createElement("div");
     hint.className = "gt-popup-hint";
@@ -1254,57 +1261,7 @@ Module.register("MMM-GlassTempest", {
       const grid = document.createElement("div");
       grid.className = "forecast-grid";
       forecastItems.forEach((day, idx) => {
-        const dayName = day?.date
-          ? new Date(day.date).toLocaleDateString([], { weekday: "short" })
-          : "";
-        const hi =
-          typeof day?.high === "number" ? day.high.toFixed(0) : "-";
-        const lo =
-          typeof day?.low === "number" ? day.low.toFixed(0) : "-";
-        const phrase = day?.phrase || "";
-        // node_helper already derives `cond` from the Tempest icon for every forecast item.
-        const dayCond = day?.cond || "partly_cloudy";
-        const dayIsDay = day?.isDaytime !== false;
-
-        const dayEl = document.createElement("div");
-        dayEl.className = "forecast-day";
-        const nameEl = document.createElement("div");
-        nameEl.className = "forecast-name";
-        nameEl.textContent = dayName;
-        const tempsEl = document.createElement("div");
-        tempsEl.className = "forecast-temps";
-        const hiEl = document.createElement("span");
-        hiEl.className = "hi";
-        hiEl.textContent = `${hi}°`;
-        const loEl = document.createElement("span");
-        loEl.className = "lo";
-        loEl.textContent = `${lo}°`;
-        tempsEl.appendChild(hiEl);
-        tempsEl.appendChild(loEl);
-        const iconEl = document.createElement("div");
-        iconEl.className = "forecast-icon";
-        iconEl.id = `${this.identifier}-forecast-anim-${idx}`;
-        if (this.enableLottie) {
-          this._registerAnimation(iconEl, this._resolveAnimationFile(dayCond, dayIsDay));
-        } else {
-          const staticIcon = document.createElement("i");
-          staticIcon.className = `fa ${this._staticIconClass(dayCond, dayIsDay)} forecast-static-icon`;
-          iconEl.appendChild(staticIcon);
-        }
-        const textEl = document.createElement("div");
-        textEl.className = "forecast-text";
-        textEl.textContent = phrase;
-        dayEl.appendChild(nameEl);
-        dayEl.appendChild(tempsEl);
-        dayEl.appendChild(iconEl);
-        dayEl.appendChild(textEl);
-        if (this.config.showForecastPrecip && typeof day?.precip === "number") {
-          const precipEl = document.createElement("div");
-          precipEl.className = "forecast-precip";
-          precipEl.textContent = `${Math.round(day.precip)}%`;
-          dayEl.appendChild(precipEl);
-        }
-        grid.appendChild(dayEl);
+        grid.appendChild(this._forecastTile(day, idx, this.enableLottie));
       });
       fc.appendChild(fcTitle);
       fc.appendChild(grid);
