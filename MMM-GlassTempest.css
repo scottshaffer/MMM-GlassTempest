@@ -370,12 +370,12 @@
 }
 
 .forecast-temps .hi {
-  color: #f97316;
+  color: #b0ff1f;
   font-weight: 700;
 }
 
 .forecast-temps .lo {
-  color: #7dd3fc;
+  color: #70afff;
   font-weight: 600;
   opacity: 0.9;
 }
