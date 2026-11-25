@@ -15,6 +15,7 @@ class FakeElement {
     this.children = [];
     this.parentNode = null;
     this.attrs = {};
+    this.listeners = {};
     this._classes = new Set();
     this.textContent = "";
     this.innerHTML = "";
@@ -34,6 +35,12 @@ class FakeElement {
   }
   setAttribute(k, v) {
     this.attrs[k] = v;
+  }
+  addEventListener(type, fn) {
+    (this.listeners[type] = this.listeners[type] || []).push(fn);
+  }
+  fire(type, ev = {}) {
+    (this.listeners[type] || []).forEach((fn) => fn(Object.assign({ preventDefault() {} }, ev)));
   }
   appendChild(c) {
     c.parentNode = this;
@@ -56,7 +63,17 @@ function setup(overrides = {}) {
     window: undefined,
     navigator: undefined,
     console,
-    document: { body, createElement: (t) => new FakeElement(t) },
+    document: {
+      body,
+      createElement: (t) => new FakeElement(t),
+      listeners: {},
+      addEventListener(type, fn) {
+        (this.listeners[type] = this.listeners[type] || []).push(fn);
+      },
+      removeEventListener(type, fn) {
+        this.listeners[type] = (this.listeners[type] || []).filter((f) => f !== fn);
+      }
+    },
     setTimeout: () => 0,
     clearTimeout() {},
     setInterval: () => 0,
@@ -75,7 +92,7 @@ function setup(overrides = {}) {
   });
   m.start();
   m.isDomReady = true;
-  return { m, sent, notes, body };
+  return { m, sent, notes, body, doc: sandbox.document };
 }
 
 function text(el) {
@@ -251,4 +268,84 @@ test("rain today shows a dash until the daily total arrives, and can be switched
   const off = setup({ showRainToday: false });
   off.m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 60, dailyrainin: 0.12 } });
   assert.doesNotMatch(text(off.m.getDom()), /Rain today/);
+});
+
+// ---- forecast popup ----------------------------------------------------------------------
+
+function findAll(el, pred, out = []) {
+  if (pred(el)) out.push(el);
+  el.children.forEach((c) => findAll(c, pred, out));
+  return out;
+}
+
+const week = Array.from({ length: 7 }, (_, i) => ({
+  date: new Date(Date.UTC(2026, 10, 25 + i, 12)).toISOString(),
+  high: 60 - i, low: 46 - i, phrase: `Day ${i}`, cond: "clear", precip: i * 10, isDaytime: true
+}));
+
+function withForecast(overrides) {
+  const ctx = setup(overrides);
+  ctx.m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 60 } });
+  ctx.m.socketNotificationReceived("TEMPEST_FORECAST", { forecast: week });
+  return ctx;
+}
+
+test("the card shows forecastDays days but the helper data holds the full week", () => {
+  const { m } = withForecast({ forecastDays: 3 });
+  const dom = m.getDom();
+  assert.equal(findAll(dom, (e) => e.className === "forecast-day").length, 3);
+});
+
+test("the forecast panel is a tappable button", () => {
+  const { m } = withForecast();
+  const panel = findAll(m.getDom(), (e) => e.classList.contains("forecast"))[0];
+  assert.equal(panel.attrs.role, "button");
+  assert.equal(panel.attrs.tabindex, "0");
+  assert.ok(panel.classList.contains("forecast-interactive"));
+});
+
+test("forecastPopup: false leaves the panel inert", () => {
+  const { m, body } = withForecast({ forecastPopup: false });
+  const panel = findAll(m.getDom(), (e) => e.classList.contains("forecast"))[0];
+  assert.equal(panel.attrs.role, undefined);
+  panel.fire("click");
+  assert.equal(body.children.filter((c) => c.classList.contains("gt-popup-overlay")).length, 0);
+});
+
+test("tapping the forecast panel opens a 7-day popup", () => {
+  const { m, body } = withForecast({ forecastDays: 3 });
+  findAll(m.getDom(), (e) => e.classList.contains("forecast"))[0].fire("click");
+  const overlay = body.children.find((c) => c.classList.contains("gt-popup-overlay"));
+  assert.ok(overlay);
+  const rows = findAll(overlay, (e) => e.className === "gt-popup-row");
+  assert.equal(rows.length, 7);
+  assert.match(text(overlay), /7-Day Forecast/);
+  assert.match(text(overlay), /Day 6/);
+});
+
+test("a tap anywhere on the popup, or Escape, closes it", () => {
+  const { m, body, doc } = withForecast();
+  const open = () => findAll(m.getDom(), (e) => e.classList.contains("forecast"))[0].fire("click");
+  const count = () => body.children.filter((c) => c.classList.contains("gt-popup-overlay")).length;
+
+  open();
+  assert.equal(count(), 1);
+  body.children.find((c) => c.classList.contains("gt-popup-overlay")).fire("click");
+  assert.equal(count(), 0);
+  assert.equal((doc.listeners.keydown || []).length, 0, "the key handler is removed");
+
+  open();
+  doc.listeners.keydown.forEach((fn) => fn({ key: "Escape" }));
+  assert.equal(count(), 0);
+
+  open();
+  open();
+  assert.equal(count(), 1, "re-opening never stacks popups");
+});
+
+test("suspend closes the popup", () => {
+  const { m, body } = withForecast();
+  findAll(m.getDom(), (e) => e.classList.contains("forecast"))[0].fire("click");
+  m.suspend();
+  assert.equal(body.children.filter((c) => c.classList.contains("gt-popup-overlay")).length, 0);
 });

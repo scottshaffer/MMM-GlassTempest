@@ -35,7 +35,9 @@ Module.register("MMM-GlassTempest", {
     pressureTrendThreshold: 0.01, // inHg delta for the fallback trend
     showForecast: true,
     showForecastPrecip: true, // chance of precipitation under each forecast day
-    forecastDays: 3, // 1-5
+    forecastDays: 3, // 1-5 days on the card
+    forecastPopup: true, // tap/click the forecast panel for the full 7-day forecast
+    forecastPopupSeconds: 30, // popup closes itself after this long; 0 = stay until dismissed
 
     // Notifications other modules can listen to (names kept compatible with MMM-AmbientWeather)
     weatherNotification: "AMBIENT_WEATHER_DATA",
@@ -862,12 +864,138 @@ Module.register("MMM-GlassTempest", {
   // its connection open so lightning alerts still work while the card is hidden.
   suspend() {
     this.suspended = true;
+    this._hideForecastPopup();
     this._pauseAnimations();
   },
 
   resume() {
     this.suspended = false;
     this._startAnimations();
+  },
+
+  // ---- 7-day forecast popup ---------------------------------------------------------------
+  //
+  // A full-screen overlay on document.body (like the lightning banner, so it sits above every
+  // module). A tap or click anywhere - including on the popup itself - closes it, as does Escape
+  // and the forecastPopupSeconds timeout. It listens for "click", not "pointerdown": the closing
+  // tap then stays on the overlay and cannot fall through onto the forecast panel underneath.
+  _showForecastPopup() {
+    const items = (this.forecast || []).slice(0, 7);
+    if (!items.length) return;
+    this._hideForecastPopup();
+
+    const classes = ["gt-popup-overlay"];
+    if (this.isDay) classes.push("gt-light");
+    if (this.reduceMotion || !this.enableLottie) classes.push("gt-reduced");
+    const overlay = document.createElement("div");
+    overlay.className = classes.join(" ");
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", `${items.length}-day forecast`);
+
+    const card = document.createElement("div");
+    card.className = "gt-popup-card";
+    const head = document.createElement("div");
+    head.className = "gt-popup-head";
+    const title = document.createElement("div");
+    title.className = "gt-popup-title";
+    title.textContent = `${items.length}-Day Forecast`;
+    head.appendChild(title);
+    if (this.config.title) {
+      const where = document.createElement("div");
+      where.className = "gt-popup-where";
+      where.textContent = this.config.title;
+      head.appendChild(where);
+    }
+    card.appendChild(head);
+
+    const todayKey = new Date().toDateString();
+    items.forEach((day) => {
+      const when = day?.date ? new Date(day.date) : null;
+      const row = document.createElement("div");
+      row.className = "gt-popup-row";
+
+      const dayEl = document.createElement("div");
+      dayEl.className = "gt-popup-day";
+      const nameEl = document.createElement("div");
+      nameEl.className = "gt-popup-dayname";
+      nameEl.textContent = !when
+        ? ""
+        : when.toDateString() === todayKey
+          ? "Today"
+          : when.toLocaleDateString([], { weekday: "long" });
+      const dateEl = document.createElement("div");
+      dateEl.className = "gt-popup-date";
+      dateEl.textContent = when ? when.toLocaleDateString([], { month: "short", day: "numeric" }) : "";
+      dayEl.appendChild(nameEl);
+      dayEl.appendChild(dateEl);
+
+      const iconEl = document.createElement("div");
+      iconEl.className = "gt-popup-icon";
+      const icon = document.createElement("i");
+      icon.className = `fa ${this._staticIconClass(day?.cond || "partly_cloudy", day?.isDaytime !== false)}`;
+      iconEl.appendChild(icon);
+
+      const temps = document.createElement("div");
+      temps.className = "gt-popup-temps";
+      const hi = document.createElement("span");
+      hi.className = "gt-popup-hi";
+      hi.textContent = typeof day?.high === "number" ? `${day.high.toFixed(0)}°` : "-°";
+      const lo = document.createElement("span");
+      lo.className = "gt-popup-lo";
+      lo.textContent = typeof day?.low === "number" ? `${day.low.toFixed(0)}°` : "-°";
+      temps.appendChild(hi);
+      temps.appendChild(lo);
+
+      const text = document.createElement("div");
+      text.className = "gt-popup-text";
+      text.textContent = day?.phrase || "";
+
+      row.appendChild(dayEl);
+      row.appendChild(iconEl);
+      row.appendChild(temps);
+      row.appendChild(text);
+      if (this.config.showForecastPrecip) {
+        const precip = document.createElement("div");
+        precip.className = "gt-popup-precip";
+        precip.textContent = typeof day?.precip === "number" ? `${Math.round(day.precip)}%` : "";
+        row.appendChild(precip);
+      }
+      card.appendChild(row);
+    });
+
+    const hint = document.createElement("div");
+    hint.className = "gt-popup-hint";
+    hint.textContent = "Tap anywhere to close";
+    card.appendChild(hint);
+    overlay.appendChild(card);
+
+    overlay.addEventListener("click", () => this._hideForecastPopup());
+    this._popupKeyHandler = (e) => {
+      if (e.key === "Escape") this._hideForecastPopup();
+    };
+    document.addEventListener("keydown", this._popupKeyHandler);
+    document.body.appendChild(overlay);
+    this.forecastPopupEl = overlay;
+
+    const secs = Number(this.config.forecastPopupSeconds);
+    if (Number.isFinite(secs) && secs > 0) {
+      this.forecastPopupTimer = setTimeout(() => this._hideForecastPopup(), secs * 1000);
+    }
+  },
+
+  _hideForecastPopup() {
+    if (this.forecastPopupTimer) {
+      clearTimeout(this.forecastPopupTimer);
+      this.forecastPopupTimer = null;
+    }
+    if (this._popupKeyHandler) {
+      document.removeEventListener("keydown", this._popupKeyHandler);
+      this._popupKeyHandler = null;
+    }
+    const el = this.forecastPopupEl;
+    this.forecastPopupEl = null;
+    if (el && el.parentNode) el.parentNode.removeChild(el);
   },
 
   _uvAnimationFile(uvValue) {
@@ -1106,6 +1234,23 @@ Module.register("MMM-GlassTempest", {
       const fcTitle = document.createElement("div");
       fcTitle.className = "forecast-title";
       fcTitle.textContent = `${forecastLimit}-Day Forecast`;
+      if (this.config.forecastPopup) {
+        const more = document.createElement("i");
+        more.className = "fa fa-angle-right forecast-chevron";
+        more.setAttribute("aria-hidden", "true");
+        fcTitle.appendChild(more);
+        fc.classList.add("forecast-interactive");
+        fc.setAttribute("role", "button");
+        fc.setAttribute("tabindex", "0");
+        fc.setAttribute("aria-label", "Show the 7-day forecast");
+        fc.addEventListener("click", () => this._showForecastPopup());
+        fc.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            this._showForecastPopup();
+          }
+        });
+      }
       const grid = document.createElement("div");
       grid.className = "forecast-grid";
       forecastItems.forEach((day, idx) => {

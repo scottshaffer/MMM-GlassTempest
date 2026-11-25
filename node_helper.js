@@ -407,9 +407,10 @@ module.exports = NodeHelper.create({
   _forecastItems() {
     const c = this.config || {};
     const metric = c.units === "metric";
-    const days = Math.max(1, Math.min(MAX_FORECAST_DAYS, Math.round(Number(c.forecastDays)) || 3));
     const conv = (f) => (f === null ? null : metric ? ((f - 32) * 5) / 9 : f);
-    return (this.forecast || []).slice(0, days).map((d) => ({
+    // All days held (up to MAX_FORECAST_DAYS): the card shows `forecastDays` of them and the
+    // tap-to-open popup shows the full week.
+    return (this.forecast || []).map((d) => ({
       date: new Date(d.dayStart * 1000).toISOString(),
       high: conv(d.high),
       low: conv(d.low),
