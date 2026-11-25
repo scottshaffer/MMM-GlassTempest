@@ -942,7 +942,9 @@ Module.register("MMM-GlassTempest", {
     this._hideForecastPopup();
 
     const classes = ["gt-popup-overlay"];
-    if (this.isDay) classes.push("gt-light");
+    // Light like the card: dayMode decides, or a theme's body.mm-day when dayMode leaves it open.
+    const light = this.isDay === true || (this.isDay == null && document.body.classList.contains("mm-day"));
+    if (light) classes.push("gt-light");
     if (this.reduceMotion || !this.enableLottie) classes.push("gt-reduced");
     const overlay = document.createElement("div");
     overlay.className = classes.join(" ");

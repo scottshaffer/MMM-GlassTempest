@@ -358,3 +358,19 @@ test("suspend closes the popup", () => {
   m.suspend();
   assert.equal(body.children.filter((c) => c.classList.contains("gt-popup-overlay")).length, 0);
 });
+
+test("the popup is light in day mode, so its icons and text are dark like the card's", () => {
+  const day = withForecast({ dayMode: "day" });
+  findAll(day.m.getDom(), (e) => e.classList.contains("forecast"))[0].fire("click");
+  assert.ok(day.body.children.find((c) => c.classList.contains("gt-popup-overlay")).classList.contains("gt-light"));
+
+  const night = withForecast({ dayMode: "night" });
+  findAll(night.m.getDom(), (e) => e.classList.contains("forecast"))[0].fire("click");
+  assert.ok(!night.body.children.find((c) => c.classList.contains("gt-popup-overlay")).classList.contains("gt-light"));
+
+  // dayMode "none" follows a theme's body.mm-day
+  const themed = withForecast({ dayMode: "none" });
+  themed.body.classList.add("mm-day");
+  findAll(themed.m.getDom(), (e) => e.classList.contains("forecast"))[0].fire("click");
+  assert.ok(themed.body.children.find((c) => c.classList.contains("gt-popup-overlay")).classList.contains("gt-light"));
+});

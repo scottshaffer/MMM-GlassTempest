@@ -925,8 +925,18 @@ body.mm-day .MMM-GlassTempest .forecast-interactive:active,
   }
 }
 
-/* Day mode */
+/* Dark mode text variables (the tiles' icons and text read var(--mm-text); the popup sits on
+   document.body, outside the card's own variable scope). */
+.gt-popup-overlay {
+  --mm-text: #e9edf5;
+  --mm-text-2: rgba(232, 237, 243, 0.8);
+}
+
+/* Day mode: the same light palette as the card */
 .gt-popup-overlay.gt-light {
+  --mm-text: #1d2738;
+  --mm-text-2: #5a6679;
+  --mm-accent-2: #0369a1;
   color: #1d2738;
   background: rgba(40, 55, 85, 0.4);
 }
