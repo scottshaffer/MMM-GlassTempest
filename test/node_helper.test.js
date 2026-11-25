@@ -169,3 +169,10 @@ test("the dew point is plausible", () => {
   const { helper } = makeHelper();
   assert.ok(Math.abs(helper._dewPointF(20, 50) - 48.7) < 0.3);
 });
+
+test("the helper sends every forecast day regardless of forecastDays (the card slices it)", () => {
+  const { helper, last } = makeHelper();
+  helper.config.forecastDays = 1;
+  helper._onForecast(restData());
+  assert.equal(last("TEMPEST_FORECAST").p.forecast.length, 2);
+});

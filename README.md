@@ -9,7 +9,7 @@ with the Tempest data connection of [MMM-TempestWeather](https://github.com/scot
 - Live temperature, humidity, wind speed and direction (about once a minute, from the Tempest WebSocket)
 - Feels-like, sea-level pressure with trend, UV index, rain detection, rain so far today
 - Tempest's own current condition drives the animated icon (the station's rain gauge overrides it while it is raining)
-- Multi-day forecast with chance of precipitation (WeatherFlow Better Forecast)
+- Multi-day forecast with chance of precipitation (WeatherFlow Better Forecast); tap it for a 7-day popup
 - Sunrise and sunset
 - Light day look and dark night look, switched at the station's own sunrise and sunset with
   `dayMode: "auto"` (see [Day and night](#day-and-night))
@@ -91,7 +91,9 @@ If the card shows "No observations received from Tempest device", the `deviceId`
 | `stationId` | required | Station ID (forecast and current conditions) |
 | `title` | `"Home Weather"` | Card title; `""` hides it |
 | `units` | `"imperial"` | `"imperial"` (°F, mph, inHg) or `"metric"` (°C, km/h, hPa) |
-| `forecastDays` | `3` | Forecast days shown (1-5) |
+| `forecastDays` | `3` | Forecast days shown on the card (1-5) |
+| `forecastPopup` | `true` | Tap or click the forecast panel to open a 7-day forecast; tap anywhere (or press Escape) to close it |
+| `forecastPopupSeconds` | `30` | The popup closes itself after this many seconds; `0` keeps it open until dismissed |
 | `showForecast` | `true` | Show the forecast panel |
 | `showForecastPrecip` | `true` | Chance of precipitation under each forecast day |
 | `showSunTimes` / `showUV` / `showBarometer` / `showRainToday` | `true` | Toggle those rows |

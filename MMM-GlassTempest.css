@@ -326,6 +326,9 @@
 }
 
 .forecast-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 12px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -345,9 +348,9 @@
 .forecast-day {
   padding: 8px 6px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.05));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.12));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
   display: grid;
   grid-auto-rows: auto;
   gap: 3px;
@@ -597,15 +600,16 @@ body.mm-day .MMM-GlassTempest .offline-text,
 /* Forecast panel and day tiles */
 body.mm-day .MMM-GlassTempest .forecast,
 .MMM-GlassTempest.gt-light .forecast {
-  background: rgba(255, 255, 255, 0.38);
-  box-shadow: inset 0 0 0 1px rgba(29, 39, 56, 0.05);
+  /* A soft blue-slate panel so the white day tiles stand out from it. */
+  background: rgba(70, 105, 160, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(29, 39, 56, 0.1);
 }
 
 body.mm-day .MMM-GlassTempest .forecast-day,
 .MMM-GlassTempest.gt-light .forecast-day {
-  border-color: rgba(29, 39, 56, 0.08);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.3));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(29, 39, 56, 0.14);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.56));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 3px rgba(29, 39, 56, 0.14);
 }
 
 body.mm-day .MMM-GlassTempest .forecast-temps .hi,
@@ -763,4 +767,212 @@ body.mm-day .gt-lightning-danger .gt-lightning-alert-icon,
     animation: none;
     transition: none;
   }
+}
+
+/* ---- Tappable forecast panel -------------------------------------------------------------- */
+.forecast-interactive {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.forecast-interactive:hover {
+  background-color: rgba(30, 50, 100, 0.4);
+}
+
+.forecast-interactive:active {
+  background-color: rgba(30, 50, 100, 0.5);
+}
+
+.forecast-interactive:focus-visible {
+  outline: 2px solid var(--mm-accent-2, #7dd3fc);
+  outline-offset: 2px;
+}
+
+.forecast-chevron {
+  font-size: 15px;
+  opacity: 0.7;
+}
+
+body.mm-day .MMM-GlassTempest .forecast-interactive:hover,
+.MMM-GlassTempest.gt-light .forecast-interactive:hover,
+body.mm-day .MMM-GlassTempest .forecast-interactive:active,
+.MMM-GlassTempest.gt-light .forecast-interactive:active {
+  background-color: rgba(70, 105, 160, 0.36);
+}
+
+/* ---- 7-day forecast popup ----------------------------------------------------------------- *
+ * Full-screen overlay on document.body (above the cards and the lightning banner). Tapping
+ * anywhere closes it. Plain translucent backdrop: no blur over the whole screen, which a Pi
+ * would struggle with. */
+.gt-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(2, 6, 23, 0.58);
+  color: #e8edf3;
+  font-family: "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", -apple-system, system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  animation: gt-popup-in 0.18s ease-out;
+}
+
+.gt-popup-card {
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow: hidden;
+  padding: 18px 20px 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(56, 189, 248, 0.2), transparent 60%),
+    radial-gradient(120% 90% at 100% 100%, rgba(167, 139, 250, 0.18), transparent 60%),
+    rgba(14, 22, 48, 0.9);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+}
+
+.gt-popup-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gt-popup-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.gt-popup-where {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.gt-popup-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 1.1fr) 34px 84px minmax(0, 1.6fr) 44px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.12));
+}
+
+.gt-popup-dayname {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.gt-popup-date {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.gt-popup-icon {
+  font-size: 22px;
+  text-align: center;
+}
+
+.gt-popup-temps {
+  display: flex;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.gt-popup-hi {
+  color: #b0ff1f;
+}
+
+.gt-popup-lo {
+  color: #70afff;
+  font-weight: 600;
+}
+
+.gt-popup-text {
+  font-size: 13px;
+  opacity: 0.9;
+  line-height: 1.25;
+}
+
+.gt-popup-precip {
+  font-size: 13px;
+  font-weight: 650;
+  text-align: right;
+  color: #7dd3fc;
+}
+
+.gt-popup-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.55;
+}
+
+@keyframes gt-popup-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Pi / reduced motion: no fade and no blur. */
+.gt-popup-overlay.gt-reduced {
+  animation: none;
+}
+
+.gt-popup-overlay.gt-reduced .gt-popup-card {
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-popup-overlay {
+    animation: none;
+  }
+}
+
+/* Day mode */
+.gt-popup-overlay.gt-light {
+  color: #1d2738;
+  background: rgba(40, 55, 85, 0.4);
+}
+
+.gt-popup-overlay.gt-light .gt-popup-card {
+  border-color: rgba(255, 255, 255, 0.7);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(56, 189, 248, 0.18), transparent 60%),
+    rgba(238, 244, 252, 0.94);
+  box-shadow: 0 24px 60px rgba(20, 30, 55, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.gt-popup-overlay.gt-light .gt-popup-row {
+  border-color: rgba(29, 39, 56, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.66));
+}
+
+.gt-popup-overlay.gt-light .gt-popup-hi {
+  color: #ea580c;
+}
+
+.gt-popup-overlay.gt-light .gt-popup-lo {
+  color: #0284c7;
+}
+
+.gt-popup-overlay.gt-light .gt-popup-precip {
+  color: #0369a1;
 }
