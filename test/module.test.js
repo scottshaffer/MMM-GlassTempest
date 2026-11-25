@@ -215,3 +215,40 @@ test("dayMode auto uses dayStart/dayEnd until sun times are known", () => {
   assert.equal(m._computeIsDay(new Date(2026, 10, 24, 12, 0)), true);
   assert.equal(m._computeIsDay(new Date(2026, 10, 24, 19, 0)), false);
 });
+
+test("the lightning row shows only today's strikes", () => {
+  const { m } = setup();
+  m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 70, lightning_day: 3, lightning_hour: 2 } });
+  const html = text(m.getDom());
+  assert.match(html, /Lightning: 3 strikes today/);
+  assert.doesNotMatch(html, /last hr/);
+});
+
+test("the strike banner no longer reports a last-hour count", () => {
+  const { m, body } = setup();
+  m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 70, lightning_day: 0, lightning_hour: 0 } });
+  m.socketNotificationReceived("TEMPEST_DATA", {
+    lastData: { tempf: 70, lightning_day: 4, lightning_hour: 4, lightning_time: Date.now(), lightning_distance: 3 }
+  });
+  const banner = body.children.find((c) => c.classList.contains("gt-lightning-alert"));
+  assert.ok(banner);
+  assert.doesNotMatch(text(banner), /last hour/);
+});
+
+test("rain today is shown in inches, or millimetres when metric", () => {
+  const imperial = setup();
+  imperial.m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 60, dailyrainin: 0.12 } });
+  assert.match(text(imperial.m.getDom()), /Rain today: 0\.12 in/);
+  const metric = setup({ units: "metric" });
+  metric.m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 60, dailyrainin: 0.2 } });
+  assert.match(text(metric.m.getDom()), /Rain today: 5\.1 mm/);
+});
+
+test("rain today shows a dash until the daily total arrives, and can be switched off", () => {
+  const { m } = setup();
+  m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 60 } });
+  assert.match(text(m.getDom()), /Rain today: -/);
+  const off = setup({ showRainToday: false });
+  off.m.socketNotificationReceived("TEMPEST_DATA", { lastData: { tempf: 60, dailyrainin: 0.12 } });
+  assert.doesNotMatch(text(off.m.getDom()), /Rain today/);
+});

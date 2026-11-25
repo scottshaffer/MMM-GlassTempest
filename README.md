@@ -7,7 +7,7 @@ with the Tempest data connection of [MMM-TempestWeather](https://github.com/scot
 ## Features
 
 - Live temperature, humidity, wind speed and direction (about once a minute, from the Tempest WebSocket)
-- Feels-like, sea-level pressure with trend, UV index, rain detection
+- Feels-like, sea-level pressure with trend, UV index, rain detection, rain so far today
 - Tempest's own current condition drives the animated icon (the station's rain gauge overrides it while it is raining)
 - Multi-day forecast with chance of precipitation (WeatherFlow Better Forecast)
 - Sunrise and sunset
@@ -94,7 +94,7 @@ If the card shows "No observations received from Tempest device", the `deviceId`
 | `forecastDays` | `3` | Forecast days shown (1-5) |
 | `showForecast` | `true` | Show the forecast panel |
 | `showForecastPrecip` | `true` | Chance of precipitation under each forecast day |
-| `showSunTimes` / `showUV` / `showBarometer` | `true` | Toggle those rows |
+| `showSunTimes` / `showUV` / `showBarometer` / `showRainToday` | `true` | Toggle those rows |
 | `updateInterval` | `300000` | Forecast and current-conditions refresh (ms, minimum 60000) |
 | `offlineThreshold` | `300000` | Fade the card when no observation arrives for this long (ms) |
 | `observationTimeout` | `180000` | No observation for this long: reconnect |
@@ -142,16 +142,16 @@ Ambient Weather realtime packet, so the Ambient card code runs unchanged:
 | :-- | :-- |
 | temperature, humidity, wind, UV, solar | WebSocket `obs_st` (live) |
 | sea-level pressure | live station pressure plus the sea-level offset from REST |
-| pressure trend, feels-like, current condition, rain today | Better Forecast `current_conditions` |
+| pressure trend, feels-like, current condition, rain so far today (shown as "Rain today") | Better Forecast `current_conditions` (refreshed every `updateInterval`) |
 | sunrise, sunset, forecast, chance of precipitation | Better Forecast `forecast.daily` |
-| rain in the last hour | summed from live observations |
-| strikes today / last hour, last strike time and distance | live observations, seeded from REST after a restart |
+| rain in the last hour (drives the "RAIN DETECTED" badge only) | summed from live observations |
+| strikes today, last strike time and distance | live observations, seeded from REST after a restart |
 
 Notes:
 
 - The Tempest sends an observation about once a minute, so lightning is reported with that
   granularity.
-- Lightning "today" counts strikes seen since the helper started (plus the last hour from REST after
+- Lightning "today" counts strikes seen since the helper started (plus strikes from the last hour, from REST, after
   a restart); it resets at local midnight.
 - A MagicMirror restart re-baselines lightning counters, so an old strike is never re-announced.
 
