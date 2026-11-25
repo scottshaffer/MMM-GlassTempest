@@ -30,6 +30,7 @@ Module.register("MMM-GlassTempest", {
     maxHeight: null, // optional card height cap in px; null sizes the card to its content
     showSunTimes: true,
     showUV: true,
+    showRainToday: true,
     showBarometer: true,
     pressureTrendThreshold: 0.01, // inHg delta for the fallback trend
     showForecast: true,
@@ -261,6 +262,16 @@ Module.register("MMM-GlassTempest", {
   _windSpeed(mph) {
     if (typeof mph !== "number") return null;
     return this.config.units === "metric" ? mph * 1.609344 : mph;
+  },
+
+  // Rain so far today (the station's local day), from WeatherFlow's daily accumulation. The
+  // helper reports it in inches; metric shows millimetres. null until the first forecast fetch.
+  _rainToday(d) {
+    const inches = this._num(d?.dailyrainin);
+    if (inches === null) return null;
+    return this.config.units === "metric"
+      ? { value: inches * 25.4, unit: "mm", digits: 1 }
+      : { value: inches, unit: "in", digits: 2 };
   },
 
   _windUnit() {
@@ -670,11 +681,9 @@ Module.register("MMM-GlassTempest", {
     else if (isNew) classes.push("gt-lightning-enter");
     el.className = classes.join(" ");
 
-    const hour = this._num(d?.lightning_hour);
     const details = [];
     if (dist) details.push(`${dist.value.toFixed(1)} ${dist.unit} away`);
     if (time !== null) details.push(this._formatStrikeTime(time));
-    if (hour !== null && hour > 0) details.push(`${hour} ${hour === 1 ? "strike" : "strikes"} in the last hour`);
     const headline = danger ? "Lightning strike nearby" : "Lightning strike detected";
     el.innerHTML = `
       <i class="fa fa-bolt gt-lightning-alert-icon" aria-hidden="true"></i>
@@ -711,9 +720,8 @@ Module.register("MMM-GlassTempest", {
     const mode = this.lightningCfg.show;
     if (mode === "never") return null;
     const day = this._num(d?.lightning_day);
-    const hour = this._num(d?.lightning_hour);
-    if (day === null && hour === null) return null; // no lightning data
-    if (mode === "auto" && !(day > 0 || hour > 0)) return null;
+    if (day === null) return null; // no lightning data
+    if (mode === "auto" && !(day > 0)) return null;
     const time = this._lightningTimeMs(d?.lightning_time);
     const dist = this._lightningDistance(d);
 
@@ -725,10 +733,10 @@ Module.register("MMM-GlassTempest", {
     if (dist) last.push(`${dist.value.toFixed(1)} ${dist.unit}`);
     // Only when nothing at all is recorded: with counts above zero the time/distance fields can
     // simply arrive a packet later, so the second line is left out until they do.
-    if (!last.length && !(day > 0 || hour > 0)) last.push("No strikes logged");
+    if (!last.length && !(day > 0)) last.push("No strikes logged");
     row.innerHTML = `<i class="fa fa-bolt"></i>
       <div class="gt-lightning-text">
-        <div>Lightning: ${this._esc(day ?? 0)} today · ${this._esc(hour ?? 0)} last hr</div>
+        <div>Lightning: ${this._esc(day ?? 0)} ${day === 1 ? "strike" : "strikes"} today</div>
         ${last.length ? `<div class="gt-lightning-last">${this._esc(last.join(" · "))}</div>` : ""}
       </div>`;
     return row;
@@ -1043,6 +1051,13 @@ Module.register("MMM-GlassTempest", {
       const iconHtml = trendIcon ? `<i class="fa ${trendIcon}"></i> ` : "";
       pr.innerHTML = `${iconHtml}Pressure: ${this._esc(pressure.value.toFixed(2))} ${this._esc(pressure.unit)}${this._esc(trendText)}`;
       metrics.appendChild(pr);
+    }
+    if (this.config.showRainToday) {
+      const rainToday = this._rainToday(d);
+      const rr = document.createElement("div");
+      rr.className = "metric-item gt-rain-today";
+      rr.innerHTML = `<i class="fa fa-umbrella"></i> Rain today: ${this._esc(rainToday ? `${rainToday.value.toFixed(rainToday.digits)} ${rainToday.unit}` : "-")}`;
+      metrics.appendChild(rr);
     }
     const lightningRow = this._lightningRow(d);
     if (lightningRow) metrics.appendChild(lightningRow);
